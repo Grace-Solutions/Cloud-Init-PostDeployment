@@ -40,15 +40,15 @@ Write-Log "INFO" "=== Cron Job Configuration ==="
 #Define cron jobs using Add-CronJob function
 #Format: Schedule, Command
 
-Add-CronJob "$(shuf -i 0-59 -n 1) 21 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get update -y > /custom/cron/logs/PerformAutomaticPackageUpdates.log 2>&1"
+#Add-CronJob "$(shuf -i 0-59 -n 1) 21 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get update -y > /custom/cron/logs/PerformAutomaticPackageUpdates.log 2>&1"
 
-Add-CronJob "$(shuf -i 0-30 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get upgrade -y > /custom/cron/logs/PerformAutomaticPackageUpgrades.log 2>&1"
+#Add-CronJob "$(shuf -i 0-30 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get upgrade -y > /custom/cron/logs/PerformAutomaticPackageUpgrades.log 2>&1"
 
-Add-CronJob "$(shuf -i 0-30 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && snap refresh > /custom/cron/logs/PerformAutomaticSnapRefresh.log 2>&1"
+#Add-CronJob "$(shuf -i 0-30 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && snap refresh > /custom/cron/logs/PerformAutomaticSnapRefresh.log 2>&1"
 
-Add-CronJob "$(shuf -i 31-59 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y > /custom/cron/logs/PerformAutomaticDistributionUpgrade.log 2>&1"
+#Add-CronJob "$(shuf -i 31-59 -n 1) 22 * * 6" "mkdir -p /custom/cron/logs/ && yes | DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y > /custom/cron/logs/PerformAutomaticDistributionUpgrade.log 2>&1"
 
-Add-CronJob "$(shuf -i 0-59 -n 1) 23 * * 6" "mkdir -p /custom/cron/logs/ && /sbin/shutdown -r | at now +1 minutes > /custom/cron/logs/PerformAutomaticPackageUpgradesReboot.log 2>&1"
+#Add-CronJob "$(shuf -i 0-59 -n 1) 23 * * 6" "mkdir -p /custom/cron/logs/ && /sbin/shutdown -r | at now +1 minutes > /custom/cron/logs/PerformAutomaticPackageUpgradesReboot.log 2>&1"
 
 Write-Log "INFO" "=== Cron Job Configuration Complete ==="
 
