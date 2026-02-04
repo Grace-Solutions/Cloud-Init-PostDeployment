@@ -131,6 +131,68 @@ Each script includes:
 - `INCLUDE_PATTERN` regex for hostname matching
 - `EXCLUDE_PATTERN` regex for hostname exclusion
 
+## Setting Up a Private Repository
+
+To keep your configuration scripts and secrets private, create your own private fork of this repository.
+
+### Step 1: Create a Private Copy
+
+**Option A: Fork (keeps link to upstream)**
+
+1. Click **Fork** at the top of this repository
+2. In the fork dialog, select your account/organization
+3. After forking, go to **Settings** → **General** → **Danger Zone**
+4. Click **Change visibility** → **Make private**
+
+**Option B: Clone and push to new private repo (no upstream link)**
+
+```bash
+# Clone this public repo
+git clone https://github.com/Grace-Solutions/Cloud-Init-PostDeployment.git
+cd Cloud-Init-PostDeployment
+
+# Create a new private repo on GitHub (via web UI or gh cli)
+# Then update the remote and push
+git remote set-url origin https://github.com/your-org/your-private-repo.git
+git push -u origin main
+```
+
+### Step 2: Create a Personal Access Token
+
+1. Go to GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+2. Click **Generate new token (classic)**
+3. Give it a descriptive name (e.g., `cloud-init-bootstrap`)
+4. Set expiration as needed
+5. Select scopes:
+   - `repo` (Full control of private repositories)
+6. Click **Generate token**
+7. **Copy the token immediately** - you won't see it again!
+
+### Step 3: Update Your Scripts
+
+Edit the scripts in your private repo to include your actual configuration:
+
+- **005-TechnitiumRecordCreation.sh** - Add your DNS server URL and API token
+- **006-UserManagement.sh** - Configure your users and SSH keys
+- **007-SSHConfiguration.sh** - Add your SSH public keys
+- **Other scripts** - Update with your specific settings
+
+### Step 4: Use Your Private Repository
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Grace-Solutions/Cloud-Init-PostDeployment/main/PostDeploymentBootstrapper.sh | bash -s -- --token "ghp_your_token" --repo "your-org/your-private-repo"
+```
+
+> **Note:** The bootstrapper is fetched from the public repo, but it clones your private repo using the provided token.
+
+### Security Best Practices
+
+- **Never commit tokens to public repos** - Use environment variables or secure vaults
+- **Use fine-grained tokens** when possible (limit to specific repos)
+- **Set token expiration** - Rotate tokens periodically
+- **Limit token scope** - Only grant `repo` access, nothing more
+- **Consider using GitHub Actions secrets** for CI/CD workflows
+
 ## License
 
 See [LICENSE](LICENSE) for details.
