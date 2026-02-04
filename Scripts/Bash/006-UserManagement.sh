@@ -62,7 +62,7 @@ Write-Log "INFO" "=== User Management ==="
 USER_CONFIG_JSON='
 {
 	"admin": {
-		"enabled": true,
+		"enabled": false,
 		"password": "auto",
 		"groups": ["sudo", "docker"],
 		"shell": "/bin/bash",
@@ -70,7 +70,7 @@ USER_CONFIG_JSON='
 		"comment": "Admin User"
 	},
 	"deploy": {
-		"enabled": true,
+		"enabled": false,
 		"password": "auto",
 		"groups": ["docker"],
 		"shell": "/bin/bash",
