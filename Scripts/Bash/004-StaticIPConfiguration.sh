@@ -23,7 +23,7 @@ source "${SCRIPT_DIR}/001-Variables.sh"
 #-------------------------------------------------------------------------------
 SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 ENABLED="true"
-INCLUDE_PATTERN="^(qdevice|technitium|dns|pve|omada|rvrsproxy|zoraxy|nginx|caddy|traefik|haproxy|bastion)"
+INCLUDE_PATTERN="^(nothing|never)"
 EXCLUDE_PATTERN="^$"
 INTERFACE_INCLUDE_PATTERN=".*"
 INTERFACE_EXCLUDE_PATTERN="^$"
