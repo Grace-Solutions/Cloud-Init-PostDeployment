@@ -180,19 +180,6 @@ curl -fsSL \
 
 ### Cloud-Init Configuration Examples
 
-**Using `bootcmd` (runs early, before networking may be fully up):**
-
-```yaml
-#cloud-config
-bootcmd:
-  - |
-    curl -fsSL \
-      -H "Authorization: token ghp_your_token" \
-      -H "Accept: application/vnd.github.v3.raw" \
-      "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" \
-      | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
-```
-
 **Using `runcmd` (runs once on first boot, after networking is up):**
 
 ```yaml
@@ -206,7 +193,31 @@ runcmd:
       | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
 ```
 
-> **Note:** `runcmd` is recommended as it runs after the network is fully configured.
+### virt-customize First Boot Example
+
+When preparing cloud images with `virt-customize`, use `--firstboot-command` to run the bootstrap on first boot:
+
+```bash
+virt-customize -a /path/to/cloud-image.qcow2 \
+  --firstboot-command 'curl -fsSL -H "Authorization: token ghp_your_token" -H "Accept: application/vnd.github.v3.raw" "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"'
+```
+
+Or create a firstboot script file and inject it:
+
+```bash
+# Create the firstboot script
+cat > /tmp/firstboot.sh << 'EOF'
+#!/bin/bash
+curl -fsSL \
+  -H "Authorization: token ghp_your_token" \
+  -H "Accept: application/vnd.github.v3.raw" \
+  "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" \
+  | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
+EOF
+
+# Inject into the image
+virt-customize -a /path/to/cloud-image.qcow2 --firstboot /tmp/firstboot.sh
+```
 
 ### Security Best Practices
 
