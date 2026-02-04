@@ -71,7 +71,7 @@ Manually performing these tasks is error-prone and time-consuming. This framewor
 - **Hostname-Based Targeting** - Include/exclude patterns control which scripts run on which hosts
 - **Idempotent Operations** - Scripts can be re-run safely without causing duplicate changes
 - **Centralized Logging** - All script output captured to log files for troubleshooting
-- **Private Repository Support** - Authenticates with GitHub token for private repos
+- **Private Repository Support** - Authenticates with GitHub API for private repos
 - **Sparse Checkout** - Only downloads required scripts, not the entire repository
 
 ## Quick Start
@@ -133,27 +133,20 @@ Each script includes:
 
 ## Setting Up a Private Repository
 
-To keep your configuration scripts and secrets private, create your own private fork of this repository.
+For production use, keep your configuration scripts and secrets in a private repository. The bootstrapper can be fetched directly from the GitHub API using a personal access token.
 
-### Step 1: Create a Private Copy
+### Step 1: Create a Private Repository
 
-**Option A: Fork (keeps link to upstream)**
-
-1. Click **Fork** at the top of this repository
-2. In the fork dialog, select your account/organization
-3. After forking, go to **Settings** → **General** → **Danger Zone**
-4. Click **Change visibility** → **Make private**
-
-**Option B: Clone and push to new private repo (no upstream link)**
+1. Go to [github.com/new](https://github.com/new)
+2. Name your repository (e.g., `Cloud-Init-PostDeployment`)
+3. Select **Private**
+4. Click **Create repository**
+5. Clone this public repo and push to your private repo:
 
 ```bash
-# Clone this public repo
 git clone https://github.com/Grace-Solutions/Cloud-Init-PostDeployment.git
 cd Cloud-Init-PostDeployment
-
-# Create a new private repo on GitHub (via web UI or gh cli)
-# Then update the remote and push
-git remote set-url origin https://github.com/your-org/your-private-repo.git
+git remote set-url origin https://github.com/your-username/your-private-repo.git
 git push -u origin main
 ```
 
@@ -163,35 +156,94 @@ git push -u origin main
 2. Click **Generate new token (classic)**
 3. Give it a descriptive name (e.g., `cloud-init-bootstrap`)
 4. Set expiration as needed
-5. Select scopes:
-   - `repo` (Full control of private repositories)
+5. Select scope: `repo` (Full control of private repositories)
 6. Click **Generate token**
 7. **Copy the token immediately** - you won't see it again!
 
-### Step 3: Update Your Scripts
+### Step 3: Fetch Scripts via GitHub API
 
-Edit the scripts in your private repo to include your actual configuration:
-
-- **005-TechnitiumRecordCreation.sh** - Add your DNS server URL and API token
-- **006-UserManagement.sh** - Configure your users and SSH keys
-- **007-SSHConfiguration.sh** - Add your SSH public keys
-- **Other scripts** - Update with your specific settings
-
-### Step 4: Use Your Private Repository
+For fully private setups, fetch the bootstrapper directly from the GitHub API:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Grace-Solutions/Cloud-Init-PostDeployment/main/PostDeploymentBootstrapper.sh | bash -s -- --token "ghp_your_token" --repo "your-org/your-private-repo"
+# GitHub API configuration
+TOKEN="ghp_your_personal_access_token"
+USERNAME="your-github-username"
+REPO="your-repo-name"
+BRANCH="main"
+SCRIPT_PATH="PostDeploymentBootstrapper.sh"
+
+# Fetch and execute the bootstrapper
+curl -fsSL \
+  -H "Authorization: token ${TOKEN}" \
+  -H "Accept: application/vnd.github.v3.raw" \
+  "https://api.github.com/repos/${USERNAME}/${REPO}/contents/${SCRIPT_PATH}?ref=${BRANCH}" \
+  | bash -s -- --token "${TOKEN}" --repo "${USERNAME}/${REPO}"
 ```
 
-> **Note:** The bootstrapper is fetched from the public repo, but it clones your private repo using the provided token.
+### Cloud-Init Configuration Example
+
+Add this to your Proxmox Cloud-Init custom script or user-data:
+
+```yaml
+#cloud-config
+runcmd:
+  - |
+    TOKEN="ghp_your_token"
+    USERNAME="your-username"
+    REPO="your-repo"
+    BRANCH="main"
+    curl -fsSL \
+      -H "Authorization: token ${TOKEN}" \
+      -H "Accept: application/vnd.github.v3.raw" \
+      "https://api.github.com/repos/${USERNAME}/${REPO}/contents/PostDeploymentBootstrapper.sh?ref=${BRANCH}" \
+      | bash -s -- --token "${TOKEN}" --repo "${USERNAME}/${REPO}"
+```
+
+### JSON Configuration for Automation
+
+For integration with automation tools, use this configuration structure:
+
+```json
+{
+  "github": {
+    "personalAccessToken": "ghp_your_token",
+    "username": "your-github-username",
+    "repo": "your-repo-name",
+    "rootUrl": "https://api.github.com/repos",
+    "contents": "contents",
+    "query": "?ref=",
+    "branch": "main",
+    "mimeType": "application/vnd.github.v3.raw",
+    "downloadsDirectory": "/opt/Cloud-Init-PostDeployment"
+  },
+  "scripts": [
+    {
+      "enabled": true,
+      "repoPath": "PostDeploymentBootstrapper.sh",
+      "params": "--token ${TOKEN} --repo ${USERNAME}/${REPO}",
+      "description": "Main bootstrapper - downloads and executes all scripts"
+    }
+  ]
+}
+```
+
+The API URL pattern is:
+```
+${rootUrl}/${username}/${repo}/${contents}/${repoPath}${query}${branch}
+```
+
+Which resolves to:
+```
+https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main
+```
 
 ### Security Best Practices
 
-- **Never commit tokens to public repos** - Use environment variables or secure vaults
+- **Never commit tokens** - Use environment variables or secure vaults
 - **Use fine-grained tokens** when possible (limit to specific repos)
 - **Set token expiration** - Rotate tokens periodically
 - **Limit token scope** - Only grant `repo` access, nothing more
-- **Consider using GitHub Actions secrets** for CI/CD workflows
+- **Store tokens securely** - Use Proxmox secrets, HashiCorp Vault, or similar
 
 ## License
 
