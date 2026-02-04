@@ -162,80 +162,51 @@ git push -u origin main
 
 ### Step 3: Fetch Scripts via GitHub API
 
-For fully private setups, fetch the bootstrapper directly from the GitHub API:
+For fully private setups, fetch the bootstrapper directly from the GitHub API. The URL pattern is:
 
-```bash
-# GitHub API configuration
-TOKEN="ghp_your_personal_access_token"
-USERNAME="your-github-username"
-REPO="your-repo-name"
-BRANCH="main"
-SCRIPT_PATH="PostDeploymentBootstrapper.sh"
-
-# Fetch and execute the bootstrapper
-curl -fsSL \
-  -H "Authorization: token ${TOKEN}" \
-  -H "Accept: application/vnd.github.v3.raw" \
-  "https://api.github.com/repos/${USERNAME}/${REPO}/contents/${SCRIPT_PATH}?ref=${BRANCH}" \
-  | bash -s -- --token "${TOKEN}" --repo "${USERNAME}/${REPO}"
+```
+https://api.github.com/repos/{username}/{repo}/contents/{path}?ref={branch}
 ```
 
-### Cloud-Init Configuration Example
+**Example curl command:**
 
-Add this to your Proxmox Cloud-Init custom script or user-data:
+```bash
+curl -fsSL \
+  -H "Authorization: token ghp_your_token" \
+  -H "Accept: application/vnd.github.v3.raw" \
+  "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" \
+  | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
+```
+
+### Cloud-Init Configuration Examples
+
+**Using `bootcmd` (runs early, before networking may be fully up):**
+
+```yaml
+#cloud-config
+bootcmd:
+  - |
+    curl -fsSL \
+      -H "Authorization: token ghp_your_token" \
+      -H "Accept: application/vnd.github.v3.raw" \
+      "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" \
+      | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
+```
+
+**Using `runcmd` (runs once on first boot, after networking is up):**
 
 ```yaml
 #cloud-config
 runcmd:
   - |
-    TOKEN="ghp_your_token"
-    USERNAME="your-username"
-    REPO="your-repo"
-    BRANCH="main"
     curl -fsSL \
-      -H "Authorization: token ${TOKEN}" \
+      -H "Authorization: token ghp_your_token" \
       -H "Accept: application/vnd.github.v3.raw" \
-      "https://api.github.com/repos/${USERNAME}/${REPO}/contents/PostDeploymentBootstrapper.sh?ref=${BRANCH}" \
-      | bash -s -- --token "${TOKEN}" --repo "${USERNAME}/${REPO}"
+      "https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main" \
+      | bash -s -- --token "ghp_your_token" --repo "your-username/your-repo"
 ```
 
-### JSON Configuration for Automation
-
-For integration with automation tools, use this configuration structure:
-
-```json
-{
-  "github": {
-    "personalAccessToken": "ghp_your_token",
-    "username": "your-github-username",
-    "repo": "your-repo-name",
-    "rootUrl": "https://api.github.com/repos",
-    "contents": "contents",
-    "query": "?ref=",
-    "branch": "main",
-    "mimeType": "application/vnd.github.v3.raw",
-    "downloadsDirectory": "/opt/Cloud-Init-PostDeployment"
-  },
-  "scripts": [
-    {
-      "enabled": true,
-      "repoPath": "PostDeploymentBootstrapper.sh",
-      "params": "--token ${TOKEN} --repo ${USERNAME}/${REPO}",
-      "description": "Main bootstrapper - downloads and executes all scripts"
-    }
-  ]
-}
-```
-
-The API URL pattern is:
-```
-${rootUrl}/${username}/${repo}/${contents}/${repoPath}${query}${branch}
-```
-
-Which resolves to:
-```
-https://api.github.com/repos/your-username/your-repo/contents/PostDeploymentBootstrapper.sh?ref=main
-```
+> **Note:** `runcmd` is recommended as it runs after the network is fully configured.
 
 ### Security Best Practices
 
